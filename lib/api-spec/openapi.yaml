@@ -3,13 +3,21 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Digital Risk Protection Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: workspace
+    description: User-owned brands and dashboard data
+  - name: monitoring
+    description: Submitted and sample risk records
+  - name: alerts
+    description: Evidence-backed risk alerts and analyst review
+  - name: cases
+    description: Investigation case management
 paths:
   /healthz:
     get:
@@ -24,6 +32,278 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /overview:
+    get:
+      operationId: getOverview
+      tags: [workspace]
+      summary: Get workspace overview
+      responses:
+        "200":
+          description: User-scoped workspace summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Overview"
+  /brands:
+    get:
+      operationId: listBrands
+      tags: [workspace]
+      summary: List the current user's brands
+      responses:
+        "200":
+          description: Brands
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Brand"
+    post:
+      operationId: createBrand
+      tags: [workspace]
+      summary: Register a brand
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BrandInput"
+      responses:
+        "201":
+          description: Registered brand
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+  /brands/{brandId}:
+    parameters:
+      - in: path
+        name: brandId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getBrand
+      tags: [workspace]
+      summary: Get a registered brand
+      responses:
+        "200":
+          description: Brand
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+        "404":
+          description: Brand not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateBrand
+      tags: [workspace]
+      summary: Update a registered brand
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BrandUpdate"
+      responses:
+        "200":
+          description: Updated brand
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+    delete:
+      operationId: deleteBrand
+      tags: [workspace]
+      summary: Delete a brand and its related records
+      responses:
+        "204":
+          description: Brand deleted
+  /monitoring/import-sample:
+    post:
+      operationId: importSampleDataset
+      tags: [monitoring]
+      summary: Import the prepared synthetic monitoring dataset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SampleImportInput"
+      responses:
+        "201":
+          description: Imported synthetic records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SampleImportResult"
+  /monitoring/submit:
+    post:
+      operationId: submitMonitoringRecord
+      tags: [monitoring]
+      summary: Submit a profile or app listing for analysis
+      description: Stores the submitted URL but does not fetch it or contact the target host.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MonitoringRecordInput"
+      responses:
+        "201":
+          description: Analyzed record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+  /alerts:
+    get:
+      operationId: listAlerts
+      tags: [alerts]
+      summary: Search and filter alerts
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+            maxLength: 160
+        - in: query
+          name: brandId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/ReviewStatus"
+        - in: query
+          name: severity
+          schema:
+            $ref: "#/components/schemas/Severity"
+      responses:
+        "200":
+          description: Matching alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+  /alerts/{alertId}:
+    parameters:
+      - in: path
+        name: alertId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getAlert
+      tags: [alerts]
+      summary: Get alert evidence
+      responses:
+        "200":
+          description: Alert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+  /alerts/{alertId}/review:
+    parameters:
+      - in: path
+        name: alertId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      operationId: reviewAlert
+      tags: [alerts]
+      summary: Update an analyst's review status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertReviewInput"
+      responses:
+        "200":
+          description: Reviewed alert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+  /cases:
+    get:
+      operationId: listCases
+      tags: [cases]
+      summary: List investigation cases
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/CaseStatus"
+        - in: query
+          name: search
+          schema:
+            type: string
+            maxLength: 160
+      responses:
+        "200":
+          description: Cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Case"
+    post:
+      operationId: createCase
+      tags: [cases]
+      summary: Create an investigation case from an alert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaseInput"
+      responses:
+        "201":
+          description: Created case
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+  /cases/{caseId}:
+    parameters:
+      - in: path
+        name: caseId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      operationId: updateCase
+      tags: [cases]
+      summary: Update a case status or analyst note
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaseUpdate"
+      responses:
+        "200":
+          description: Updated case
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
 components:
   schemas:
     HealthStatus:
@@ -31,6 +311,178 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
-
+      required: [status]
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    Severity:
+      type: string
+      enum: [low, medium, high]
+    ReviewStatus:
+      type: string
+      enum: [open, reviewing, confirmed, dismissed, escalated]
+    CaseStatus:
+      type: string
+      enum: [open, investigating, resolved]
+    RecordType:
+      type: string
+      enum: [social_profile, app_listing]
+    Brand:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        logoUrl: { type: ["string", "null"] }
+        officialDomain: { type: string }
+        socialHandles:
+          type: array
+          items: { type: string }
+        appIdentifiers:
+          type: array
+          items: { type: string }
+        createdAt: { type: string, format: date-time }
+      required: [id, name, logoUrl, officialDomain, socialHandles, appIdentifiers, createdAt]
+    BrandInput:
+      type: object
+      properties:
+        name: { type: string, minLength: 2, maxLength: 100 }
+        logoUrl: { type: ["string", "null"], maxLength: 2048 }
+        officialDomain: { type: string, minLength: 3, maxLength: 253 }
+        socialHandles:
+          type: array
+          maxItems: 20
+          items: { type: string, maxLength: 100 }
+        appIdentifiers:
+          type: array
+          maxItems: 20
+          items: { type: string, maxLength: 200 }
+      required: [name, officialDomain, socialHandles, appIdentifiers]
+    BrandUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 2, maxLength: 100 }
+        logoUrl: { type: ["string", "null"], maxLength: 2048 }
+        officialDomain: { type: string, minLength: 3, maxLength: 253 }
+        socialHandles:
+          type: array
+          maxItems: 20
+          items: { type: string, maxLength: 100 }
+        appIdentifiers:
+          type: array
+          maxItems: 20
+          items: { type: string, maxLength: 200 }
+    RiskComponents:
+      type: object
+      properties:
+        nameSimilarity: { type: integer, minimum: 0, maximum: 100 }
+        logoMismatch: { type: integer, minimum: 0, maximum: 100 }
+        identityMismatch: { type: integer, minimum: 0, maximum: 100 }
+        behavior: { type: integer, minimum: 0, maximum: 100 }
+      required: [nameSimilarity, logoMismatch, identityMismatch, behavior]
+    Alert:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        brandId: { type: string, format: uuid }
+        brandName: { type: string }
+        recordType: { $ref: "#/components/schemas/RecordType" }
+        source: { type: string }
+        targetName: { type: string }
+        targetHandle: { type: string }
+        targetUrl: { type: string }
+        claimedDomain: { type: ["string", "null"] }
+        score: { type: integer, minimum: 0, maximum: 100 }
+        severity: { $ref: "#/components/schemas/Severity" }
+        status: { $ref: "#/components/schemas/ReviewStatus" }
+        components: { $ref: "#/components/schemas/RiskComponents" }
+        evidence:
+          type: array
+          items: { type: string }
+        summary: { type: string }
+        createdAt: { type: string, format: date-time }
+        reviewedAt: { type: ["string", "null"], format: date-time }
+      required: [id, brandId, brandName, recordType, source, targetName, targetHandle, targetUrl, claimedDomain, score, severity, status, components, evidence, summary, createdAt, reviewedAt]
+    MonitoringRecordInput:
+      type: object
+      properties:
+        brandId: { type: string, format: uuid }
+        recordType: { $ref: "#/components/schemas/RecordType" }
+        source: { type: string, minLength: 2, maxLength: 80 }
+        targetName: { type: string, minLength: 2, maxLength: 160 }
+        targetHandle: { type: string, maxLength: 160 }
+        targetUrl: { type: string, format: uri, maxLength: 2048 }
+        claimedDomain: { type: ["string", "null"], maxLength: 253 }
+        logoObservation:
+          type: string
+          enum: [match, mismatch, unknown]
+        behavior:
+          type: integer
+          minimum: 0
+          maximum: 100
+      required: [brandId, recordType, source, targetName, targetHandle, targetUrl, logoObservation, behavior]
+    AlertReviewInput:
+      type: object
+      properties:
+        status: { $ref: "#/components/schemas/ReviewStatus" }
+        note: { type: string, maxLength: 2000 }
+      required: [status]
+    SampleImportInput:
+      type: object
+      properties:
+        brandId: { type: string, format: uuid }
+      required: [brandId]
+    SampleImportResult:
+      type: object
+      properties:
+        imported: { type: integer }
+        alerts:
+          type: array
+          items: { $ref: "#/components/schemas/Alert" }
+      required: [imported, alerts]
+    Case:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        alertId: { type: string, format: uuid }
+        brandName: { type: string }
+        targetName: { type: string }
+        title: { type: string }
+        status: { $ref: "#/components/schemas/CaseStatus" }
+        priority: { $ref: "#/components/schemas/Severity" }
+        analystNote: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, alertId, brandName, targetName, title, status, priority, analystNote, createdAt, updatedAt]
+    CaseInput:
+      type: object
+      properties:
+        alertId: { type: string, format: uuid }
+        title: { type: string, minLength: 3, maxLength: 160 }
+        priority: { $ref: "#/components/schemas/Severity" }
+      required: [alertId, title, priority]
+    CaseUpdate:
+      type: object
+      properties:
+        status: { $ref: "#/components/schemas/CaseStatus" }
+        analystNote: { type: string, maxLength: 5000 }
+    Overview:
+      type: object
+      properties:
+        brandCount: { type: integer }
+        openAlerts: { type: integer }
+        highRiskAlerts: { type: integer }
+        activeCases: { type: integer }
+        recentAlerts:
+          type: array
+          items: { $ref: "#/components/schemas/Alert" }
+        severityCounts:
+          type: object
+          properties:
+            high: { type: integer }
+            medium: { type: integer }
+            low: { type: integer }
+          required: [high, medium, low]
+      required: [brandCount, openAlerts, highRiskAlerts, activeCases, recentAlerts, severityCounts]

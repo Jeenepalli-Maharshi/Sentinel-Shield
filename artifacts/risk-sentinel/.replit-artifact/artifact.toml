@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Risk Sentinel"
+description = "A digital risk protection workspace for registering official brand identities, reviewing suspicious social profiles and app listings, and managing evidence-backed analyst cases."
+version = "1.0.0"
+id = "artifacts/risk-sentinel"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23951
+
+[services.development]
+run = "pnpm --filter @workspace/risk-sentinel run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/risk-sentinel", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/risk-sentinel/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23951"
+BASE_PATH = "/"

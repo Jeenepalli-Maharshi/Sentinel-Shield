@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 44" fill="none">
+  <rect width="44" height="44" rx="12" fill="#25384A"/>
+  <path d="M22 8.5 33 13v8.3c0 7-4.7 11.6-11 14.2-6.3-2.6-11-7.2-11-14.2V13l11-4.5Z" stroke="#F2B85F" stroke-width="2"/>
+  <path d="m17.4 21.8 3 3 6.3-6.5" stroke="#F2B85F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="55" y="29" fill="#25384A" font-family="DM Sans, sans-serif" font-size="19" font-weight="700">risk<tspan font-weight="400">sentinel</tspan></text>
+</svg>
